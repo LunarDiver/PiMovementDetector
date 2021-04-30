@@ -35,7 +35,7 @@ namespace PiMovementDetector
             Directory.CreateDirectory("imgs");
 
             _picTaker.Elapsed += (_, _) => TakePicture();
-            _picProcesser.Elapsed += (_, _) => ProcessPictureQueueNew();
+            _picProcesser.Elapsed += (_, _) => ProcessPictureQueue();
             _picTaker.Start();
             _picProcesser.Start();
 
@@ -73,7 +73,7 @@ namespace PiMovementDetector
             _imgData.Enqueue((DateTime.UtcNow, img));
         }
 
-        private static void ProcessPictureQueueNew()
+        private static void ProcessPictureQueue()
         {
             if (_imgData.Count == 0)
                 return;
