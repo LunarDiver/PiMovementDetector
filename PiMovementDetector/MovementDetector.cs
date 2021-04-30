@@ -3,7 +3,7 @@ using System.Drawing;
 
 namespace PiMovementDetector
 {
-    internal class MovementDetector
+    public class MovementDetector
     {
         public byte MovementThreshold { get; set; } = 64;
 
@@ -41,7 +41,7 @@ namespace PiMovementDetector
                 {
                     Color currPixel = movementImage.GetPixel(x, y);
 
-                    if (currPixel != Color.Black)
+                    if (currPixel.ToArgb() != Color.Black.ToArgb())
                         movingPixels++;
                 }
 
@@ -58,9 +58,9 @@ namespace PiMovementDetector
                     Color lastPixel = prev.GetPixel(x, y);
                     Color currPixel = curr.GetPixel(x, y);
 
-                    int newR = lastPixel.R - currPixel.R;
-                    int newG = lastPixel.G - currPixel.G;
-                    int newB = lastPixel.B - currPixel.B;
+                    int newR = Math.Abs(lastPixel.R - currPixel.R);
+                    int newG = Math.Abs(lastPixel.G - currPixel.G);
+                    int newB = Math.Abs(lastPixel.B - currPixel.B);
 
                     if (newR < 64)
                         newR = 0;
