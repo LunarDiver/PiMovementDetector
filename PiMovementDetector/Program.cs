@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System.Threading;
+using System.Collections.Generic;
 using Unosquare.RaspberryIO;
 using Unosquare.RaspberryIO.Camera;
-using System.Timers;
 using System;
 using System.IO;
 using System.Drawing;
+using Timer = System.Timers.Timer;
 
 namespace PiMovementDetector
 {
@@ -22,37 +23,51 @@ namespace PiMovementDetector
             Interval = 500
         };
 
-        private static readonly object _picLock = new object();
-
         private static readonly Queue<(DateTime taken, Bitmap image)> _imgData = new Queue<(DateTime taken, Bitmap image)>();
 
-        private static (DateTime taken, Bitmap image) _lastImg;
+        private static Bitmap _lastImg;
 
         private static MovementDetector _detector = new MovementDetector();
 
         private static void Main(string[] args)
         {
+            AppDomain.CurrentDomain.UnhandledException += (_, _) => Close();
+
             Directory.CreateDirectory("imgs");
+
+            if (double.TryParse(args[0], out double detectionPercent))
+                _detector.DetectionPercentMin = detectionPercent;
 
             _picTaker.Elapsed += (_, _) => TakePicture();
             _picProcesser.Elapsed += (_, _) => ProcessPictureQueue();
             _picTaker.Start();
             _picProcesser.Start();
 
-            Console.ReadLine();
+            Console.CancelKeyPress += (_, _) => Close();
 
+            while (true)
+                Console.ReadLine();
+        }
+
+        private static void Close()
+        {
             _picTaker.Dispose();
             _picProcesser.Dispose();
 
-            _lastImg.image?.Dispose();
+            _lastImg?.Dispose();
             while (_imgData.TryDequeue(out (DateTime taken, Bitmap image) disposingImg))
                 disposingImg.image.Dispose();
+
+            Environment.Exit(0);
         }
 
         private static void TakePicture()
         {
+            using var m = new Mutex(true, $"{nameof(Pi)}.{nameof(Pi.Camera)}");
+
             using var imgStream = new MemoryStream();
-            lock (_picLock)
+
+            if (m.WaitOne(TimeSpan.FromSeconds(5)))
             {
                 imgStream.Write(Pi.Camera.CaptureImage(new CameraStillSettings
                 {
@@ -66,7 +81,10 @@ namespace PiMovementDetector
                     CaptureWhiteBalanceControl = CameraWhiteBalanceMode.Cloud,
                     CaptureVideoStabilizationEnabled = false
                 }));
+
+                m.ReleaseMutex();
             }
+            else return;
 
             var img = new Bitmap(imgStream);
 
@@ -80,18 +98,21 @@ namespace PiMovementDetector
 
             if (_lastImg == default)
             {
-                _lastImg = _imgData.Dequeue();
+                _lastImg = _imgData.Dequeue().image;
                 return;
             }
 
             var currImg = _imgData.Dequeue();
 
-            double movement = _detector.GetMovementPercent(_lastImg.image, currImg.image);
+            if (_detector.HasMovement(_lastImg, currImg.image))
+                Console.WriteLine($"Movement detected at {currImg.taken}!");
 
-            Console.WriteLine($"[{currImg.taken}]: {Math.Round(movement * 100, 2)}%");
+            // double movement = _detector.GetMovementPercent(_lastImg.image, currImg.image);
 
-            _lastImg.image.Dispose();
-            _lastImg = currImg;
+            // Console.WriteLine($"[{currImg.taken}]: {Math.Round(movement * 100, 2)}%");
+
+            _lastImg.Dispose();
+            _lastImg = currImg.image;
         }
     }
 }
