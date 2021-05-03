@@ -10,6 +10,14 @@ namespace PiMovementDetector
 {
     public class TcpConnector : IDisposable
     {
+        public int ConnectedClientsCount
+        {
+            get
+            {
+                return _connectedClients.Count;
+            }
+        }
+
         private readonly TcpListener _listener;
 
         private readonly List<TcpClient> _connectedClients = new List<TcpClient>();
