@@ -49,11 +49,8 @@ namespace PiMovementDetector
 
         public void Write<T>(T data)
         {
-            if (typeof(T)
-                .GetCustomAttributes(true)
-                .FirstOrDefault(a => a.GetType()
-                .Equals(typeof(SerializableAttribute))) == null)
-                throw new ArgumentException($"Type {nameof(T)} must have attribute {nameof(SerializableAttribute)}.");
+            if (!typeof(T).IsSerializable)
+                throw new ArgumentException($"Type {nameof(T)} must be serializable.");
 
             byte[] serialized = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes<T>(data);
 
@@ -70,11 +67,8 @@ namespace PiMovementDetector
 
         public async Task WriteAsync<T>(T data)
         {
-            if (typeof(T)
-                .GetCustomAttributes(true)
-                .FirstOrDefault(a => a.GetType()
-                .Equals(typeof(SerializableAttribute))) == null)
-                throw new ArgumentException($"Type {nameof(T)} must have attribute {nameof(SerializableAttribute)}.");
+            if (!typeof(T).IsSerializable)
+                throw new ArgumentException($"Type {nameof(T)} must be serializable.");
 
             byte[] serialized = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes<T>(data);
 
