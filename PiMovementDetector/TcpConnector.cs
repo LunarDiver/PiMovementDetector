@@ -82,8 +82,9 @@ namespace PiMovementDetector
 
         private void ClientAccepted(IAsyncResult ar)
         {
-            _connectedClients.Add(_listener.EndAcceptTcpClient(ar));
-            ClientConnected.Invoke(this, _connectedClients[^1].GetStream());
+            TcpClient client = _listener.EndAcceptTcpClient(ar);
+            _connectedClients.Add(client);
+            ClientConnected.Invoke(this, client.GetStream());
 
             _connector.Start();
         }
