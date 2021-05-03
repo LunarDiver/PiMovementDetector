@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace PiMovementDetector
 {
@@ -52,7 +53,7 @@ namespace PiMovementDetector
             if (!typeof(T).IsSerializable)
                 throw new ArgumentException($"Type {nameof(T)} must be serializable.");
 
-            byte[] serialized = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes<T>(data);
+            byte[] serialized = JsonSerializer.SerializeToUtf8Bytes<T>(data);
 
             Write(serialized);
         }
@@ -70,7 +71,7 @@ namespace PiMovementDetector
             if (!typeof(T).IsSerializable)
                 throw new ArgumentException($"Type {nameof(T)} must be serializable.");
 
-            byte[] serialized = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes<T>(data);
+            byte[] serialized = JsonSerializer.SerializeToUtf8Bytes<T>(data);
 
             await WriteAsync(serialized);
         }
@@ -86,7 +87,7 @@ namespace PiMovementDetector
         {
             TcpClient client = _listener.EndAcceptTcpClient(ar);
             _connectedClients.Add(client);
-            ClientConnected.Invoke(this, client.GetStream());
+            ClientConnected?.Invoke(this, client.GetStream());
 
             _connector.Start();
         }
