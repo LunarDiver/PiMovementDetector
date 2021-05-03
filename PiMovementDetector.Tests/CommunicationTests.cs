@@ -1,3 +1,4 @@
+using System.Text;
 using System.Threading;
 using System;
 using System.Net;
@@ -70,6 +71,38 @@ namespace PiMovementDetector.Tests
             Assert.AreEqual(213, receivedAtListener);
 
             connectingClient?.Dispose();
+        }
+
+        [TestMethod]
+        public void CanReadAppPattern()
+        {
+            TcpClient connectingClient = null;
+            using var connector = new TcpConnector(out ushort port);
+            connectingClient = new TcpClient();
+            connectingClient.Connect(IPAddress.Any, port);
+
+            while (connector.ConnectedClientsCount <= 0)
+            {
+                Thread.Sleep(10);
+            }
+
+            string sendingString = "This is supposed to be image data.";
+
+            connector.Write(BitConverter.GetBytes((ushort)sendingString.Length));
+            connector.Write(Encoding.UTF8.GetBytes(sendingString));
+
+            using var stream = connectingClient.GetStream();
+
+            byte[] stringLength = new byte[2];
+            stream.Read(stringLength);
+            ushort stringLengthShort = BitConverter.ToUInt16(stringLength);
+
+            byte[] readData = new byte[stringLengthShort];
+            stream.Read(readData);
+
+            Assert.AreEqual(sendingString, Encoding.UTF8.GetString(readData));
+
+            connectingClient.Dispose();
         }
     }
 }
