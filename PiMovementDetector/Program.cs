@@ -27,13 +27,27 @@ namespace PiMovementDetector
 
         private static Bitmap _lastImg;
 
-        private static MovementDetector _detector = new MovementDetector();
+        private static readonly MovementDetector _detector = new MovementDetector();
 
-        private static void Main(string[] args)
+        private static readonly TcpConnector _tcp = new TcpConnector(out _tcpPort);
+
+        private static readonly ushort _tcpPort;
+
+        private const string _tcpPortFile = "tcpport";
+
+        private static int Main(string[] args)
         {
             AppDomain.CurrentDomain.UnhandledException += (_, _) => Close();
 
-            Directory.CreateDirectory("imgs");
+            try
+            {
+                File.WriteAllText(_tcpPortFile, _tcpPort.ToString());
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine($"Could not write TCP port to file: {exc.Message}");
+                return 1;
+            }
 
             if (double.TryParse(args[0], out double detectionPercent))
                 _detector.DetectionPercentMin = detectionPercent;
@@ -58,7 +72,18 @@ namespace PiMovementDetector
             while (_imgData.TryDequeue(out (DateTime taken, Bitmap image) disposingImg))
                 disposingImg.image.Dispose();
 
-            Environment.Exit(0);
+            try
+            {
+                File.Delete(_tcpPortFile);
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine($"Could not delete TCP port file: {exc.Message}");
+                Environment.Exit(2);
+                return;
+            }
+
+            Environment.Exit(Environment.ExitCode);
         }
 
         private static void TakePicture()
