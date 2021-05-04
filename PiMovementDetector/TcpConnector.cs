@@ -50,7 +50,7 @@ namespace PiMovementDetector
 
             for (int i = 0; i < _connectedClients.Count; i++)
             {
-                using var s = _connectedClients[i].GetStream();
+                var s = _connectedClients[i].GetStream();
 
                 if (WriteLengthIndicator)
                     s.Write(BitConverter.GetBytes((ushort)buffer.Length));
@@ -75,7 +75,7 @@ namespace PiMovementDetector
 
             for (int i = 0; i < _connectedClients.Count; i++)
             {
-                using var s = _connectedClients[i].GetStream();
+                var s = _connectedClients[i].GetStream();
 
                 if (WriteLengthIndicator)
                     await s.WriteAsync(BitConverter.GetBytes((ushort)buffer.Length));
