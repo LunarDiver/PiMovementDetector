@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Drawing;
 using Timer = System.Timers.Timer;
+using System.Drawing.Imaging;
 
 namespace PiMovementDetector
 {
@@ -29,7 +30,7 @@ namespace PiMovementDetector
 
         private static readonly MovementDetector _detector = new MovementDetector();
 
-        private static readonly TcpConnector _tcp = new TcpConnector(out _tcpPort);
+        private static readonly TcpConnector _tcp = new TcpConnector(out _tcpPort, true);
 
         private static readonly ushort _tcpPort;
 
@@ -104,7 +105,9 @@ namespace PiMovementDetector
                     ImageSaturation = -100,
                     CaptureDisplayPreview = false,
                     CaptureWhiteBalanceControl = CameraWhiteBalanceMode.Cloud,
-                    CaptureVideoStabilizationEnabled = false
+                    CaptureVideoStabilizationEnabled = false,
+                    HorizontalFlip = true,
+                    VerticalFlip = true
                 }));
 
                 m.ReleaseMutex();
@@ -130,7 +133,14 @@ namespace PiMovementDetector
             var currImg = _imgData.Dequeue();
 
             if (_detector.HasMovement(_lastImg, currImg.image))
+            {
                 Console.WriteLine($"Movement detected at {currImg.taken}!");
+
+                using var memory = new MemoryStream();
+                currImg.image.Save(memory, ImageFormat.Png);
+
+                _tcp.Write(memory.ToArray());
+            }
 
             // double movement = _detector.GetMovementPercent(_lastImg.image, currImg.image);
 
