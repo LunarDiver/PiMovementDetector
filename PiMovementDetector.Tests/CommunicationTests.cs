@@ -93,7 +93,7 @@ namespace PiMovementDetector.Tests
 
             using var stream = connectingClient.GetStream();
 
-            byte[] stringLength = new byte[2];
+            byte[] stringLength = new byte[sizeof(ushort)];
             stream.Read(stringLength);
             ushort stringLengthShort = BitConverter.ToUInt16(stringLength);
 
