@@ -19,6 +19,8 @@ namespace PiMovementDetector
             }
         }
 
+        public readonly bool WriteLengthIndicator;
+
         private readonly TcpListener _listener;
 
         private readonly List<TcpClient> _connectedClients = new List<TcpClient>();
@@ -29,13 +31,15 @@ namespace PiMovementDetector
             Interval = 1000
         };
 
-        public TcpConnector(out ushort port)
+        public TcpConnector(out ushort port, bool writeLength = false)
         {
             _listener = TcpListener.Create(0);
             _listener.Start();
 
             _connector.Elapsed += ConnectNewClient;
             _connector.Start();
+
+            WriteLengthIndicator = writeLength;
 
             port = (ushort)((IPEndPoint)_listener.LocalEndpoint).Port;
         }
@@ -45,7 +49,14 @@ namespace PiMovementDetector
             CheckConnections();
 
             for (int i = 0; i < _connectedClients.Count; i++)
-                _connectedClients[i].GetStream().Write(buffer);
+            {
+                using var s = _connectedClients[i].GetStream();
+
+                if (WriteLengthIndicator)
+                    s.Write(BitConverter.GetBytes((ushort)buffer.Length));
+
+                s.Write(buffer);
+            }
         }
 
         public void Write<T>(T data)
@@ -63,7 +74,14 @@ namespace PiMovementDetector
             CheckConnections();
 
             for (int i = 0; i < _connectedClients.Count; i++)
-                await _connectedClients[i].GetStream().WriteAsync(buffer);
+            {
+                using var s = _connectedClients[i].GetStream();
+
+                if (WriteLengthIndicator)
+                    await s.WriteAsync(BitConverter.GetBytes((ushort)buffer.Length));
+
+                await s.WriteAsync(buffer);
+            }
         }
 
         public async Task WriteAsync<T>(T data)
