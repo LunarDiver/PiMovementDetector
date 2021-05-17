@@ -39,6 +39,7 @@ namespace PiMovementDetector
 
         private static int Main(string[] args)
         {
+            AppDomain.CurrentDomain.UnhandledException += LogException;
             AppDomain.CurrentDomain.UnhandledException += (_, _) => Close();
 
             try
@@ -63,6 +64,11 @@ namespace PiMovementDetector
 
             while (true)
                 Console.ReadLine();
+        }
+
+        private static void LogException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Console.WriteLine("Unhandled exception occurred:\n" + e.ExceptionObject);
         }
 
         private static void Close()
