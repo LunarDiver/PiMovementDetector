@@ -7,6 +7,7 @@ using System.IO;
 using System.Drawing;
 using Timer = System.Timers.Timer;
 using System.Drawing.Imaging;
+using TcpSubLib;
 
 namespace PiMovementDetector
 {
