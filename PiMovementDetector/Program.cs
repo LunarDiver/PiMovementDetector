@@ -52,7 +52,7 @@ namespace PiMovementDetector
                 return 1;
             }
 
-            if (double.TryParse(args[0], out double detectionPercent))
+            if (args.Length > 0 && double.TryParse(args[0], out double detectionPercent))
                 _detector.DetectionPercentMin = detectionPercent;
 
             _picTaker.Elapsed += (_, _) => TakePicture();
